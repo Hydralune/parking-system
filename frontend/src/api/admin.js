@@ -87,3 +87,9 @@ export function deleteMember(id) {
     method: 'delete'
   })
 }
+export function deleteReservation(id) {
+  return request({
+    url: `/reservations/${id}`,
+    method: "delete"
+  })
+}

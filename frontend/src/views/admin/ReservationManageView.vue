@@ -73,7 +73,7 @@
 <script>
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getReservations, updateReservation, deleteReservation as apiDelete } from '@/api/admin'
+import { getAdminReservations as getReservations, updateReservationStatus as updateReservation, deleteReservation as apiDelete } from '@/api/admin'
 
 export default {
   name: 'ReservationManageView',

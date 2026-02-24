@@ -77,7 +77,7 @@
 <script>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getParkingLots, createParkingLot, updateParkingLot as apiUpdate, deleteParkingLot as apiDelete } from '@/api/admin'
+import { getAdminParkingLots as getParkingLots, createParkingLot, updateParkingLot as apiUpdate, deleteParkingLot as apiDelete } from '@/api/admin'
 
 export default {
   name: 'ParkingLotManageView',
