@@ -29,22 +29,28 @@ public class ParkingLotServiceImpl extends ServiceImpl<ParkingLotMapper, Parking
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like("name", keyword).or().like("address", keyword);
         }
-        wrapper.eq("status", 1); // 只查询营业中的停车场
-        return parkingLotMapper.selectPage(page, wrapper);
+        wrapper.eq("status", 1);
+        IPage<ParkingLot> result = parkingLotMapper.selectPage(page, wrapper);
+        // 动态填充实时可用车位数
+        result.getRecords().forEach(lot -> lot.setAvailableSpots(getAvailableSpotsCount(lot.getId())));
+        return result;
     }
 
     @Override
     public List<ParkingLot> getAllParkingLots() {
         QueryWrapper<ParkingLot> wrapper = new QueryWrapper<>();
-        wrapper.eq("status", 1); // 只查询营业中的停车场
-        return parkingLotMapper.selectList(wrapper);
+        wrapper.eq("status", 1);
+        List<ParkingLot> list = parkingLotMapper.selectList(wrapper);
+        list.forEach(lot -> lot.setAvailableSpots(getAvailableSpotsCount(lot.getId())));
+        return list;
     }
 
     @Override
     public ParkingLot getParkingLotById(Long id) {
-        // 从数据库获取
         ParkingLot parkingLot = parkingLotMapper.selectById(id);
-        
+        if (parkingLot != null) {
+            parkingLot.setAvailableSpots(getAvailableSpotsCount(id));
+        }
         return parkingLot;
     }
 

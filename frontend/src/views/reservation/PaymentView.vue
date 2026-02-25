@@ -116,6 +116,7 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { payReservation } from '@/api/reservation'
 import HeaderNav from '@/components/HeaderNav.vue'
 
 export default {
@@ -126,23 +127,39 @@ export default {
     const selectedPaymentMethod = ref('alipay')
     const loading = ref(false)
 
+    // 从路由 state 读取真实预约数据
+    const raw = window.history.state?.reservation
+    const reservation = raw ? JSON.parse(raw) : null
+
+    if (!reservation) {
+      ElMessage.error('订单信息丢失，请重新进入')
+      router.replace('/reservations')
+    }
+
     const orderInfo = reactive({
-      orderId: 'ORD' + Date.now(),
-      parkingLotName: '中央商务区停车场',
-      spotNumber: 'A001',
-      startTime: '2024-01-01 08:00',
-      endTime: '2024-01-01 10:00',
-      licensePlate: '京A12345',
-      totalFee: 10.00
+      orderId: reservation ? `ORD${reservation.id}` : '-',
+      reservationId: reservation?.id,
+      parkingLotName: reservation?.parkingLotName || '停车场',
+      spotNumber: reservation?.spotNumber || '-',
+      startTime: reservation?.startTime || '-',
+      endTime: reservation?.endTime || '-',
+      licensePlate: reservation?.licensePlate || '-',
+      totalFee: reservation?.totalFee || '0.00'
     })
 
     const handlePayment = async () => {
       if (!selectedPaymentMethod.value) { ElMessage.warning('请选择支付方式'); return }
       loading.value = true
       try {
-        await new Promise(r => setTimeout(r, 1500))
-        ElMessage.success('支付成功！')
-        router.push('/reservations')
+        // 模拟支付延迟
+        await new Promise(r => setTimeout(r, 1200))
+        const res = await payReservation(orderInfo.reservationId)
+        if (res.success) {
+          ElMessage.success('支付成功！')
+          router.replace('/reservations')
+        } else {
+          ElMessage.error(res.message || '支付失败')
+        }
       } catch (e) {
         ElMessage.error('支付失败：' + e.message)
       } finally { loading.value = false }

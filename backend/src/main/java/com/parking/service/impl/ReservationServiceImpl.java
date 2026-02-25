@@ -113,6 +113,18 @@ public class ReservationServiceImpl extends ServiceImpl<ReservationMapper, Reser
         return false;
     }
 
+    @Override
+    public boolean payReservation(Long id) {
+        Reservation reservation = reservationMapper.selectById(id);
+        if (reservation == null) return false;
+        if (reservation.getPaymentStatus() == 1) throw new RuntimeException("该订单已支付");
+
+        // 更新支付状态为已支付
+        reservation.setPaymentStatus(1);
+        // 预约状态保持已确认(2)，等待实际入场
+        return updateById(reservation);
+    }
+
     /**
      * 检查车位在指定时间段内是否可用
      */

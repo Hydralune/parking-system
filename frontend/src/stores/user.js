@@ -20,22 +20,17 @@ export const useUserStore = defineStore('user', {
     async login(credentials) {
       try {
         const response = await login(credentials)
-        if (response.data && response.data.success) {
-          const { token, userId, username, userType } = response.data
-          
-          // 保存到状态
-          this.token = token
-          this.userId = userId
-          this.username = username
-          this.userType = userType
+        const data = response.data  // LoginResponse 对象
+        if (data && data.token) {
+          this.token = data.token
+          this.userId = data.userId
+          this.username = data.username
+          this.userType = data.userType
           this.isAuthenticated = true
-          
-          // 保存到本地存储
-          localStorage.setItem('token', token)
-          
-          return { success: true, message: response.data.message }
+          localStorage.setItem('token', data.token)
+          return { success: true, message: '登录成功' }
         } else {
-          return { success: false, message: (response.data && response.data.message) || '用户名或密码错误' }
+          return { success: false, message: data?.message || '用户名或密码错误' }
         }
       } catch (error) {
         return { success: false, message: error.message || '登录失败' }

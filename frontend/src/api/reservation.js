@@ -1,5 +1,13 @@
 import request from '@/utils/request'
 
+// 获取当前用户会员信息
+export function getMyMember() {
+  return request({
+    url: '/members/me',
+    method: 'get'
+  })
+}
+
 // 获取用户预约列表
 export function getUserReservations(params) {
   return request({
@@ -23,6 +31,14 @@ export function getReservationById(id) {
   return request({
     url: `/reservations/${id}`,
     method: 'get'
+  })
+}
+
+// 支付预约
+export function payReservation(id) {
+  return request({
+    url: `/reservations/${id}/pay`,
+    method: 'put'
   })
 }
 

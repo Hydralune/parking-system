@@ -24,3 +24,20 @@ export function getAvailableSpotsCount(id) {
     method: 'get'
   })
 }
+
+// 获取停车场可用车位列表（支持区域筛选）
+export function getAvailableSpots(id, zone) {
+  return request({
+    url: `/parking-lots/${id}/spots`,
+    method: 'get',
+    params: zone ? { zone } : {}
+  })
+}
+
+// 获取停车场区域列表
+export function getParkingZones(id) {
+  return request({
+    url: `/parking-lots/${id}/zones`,
+    method: 'get'
+  })
+}

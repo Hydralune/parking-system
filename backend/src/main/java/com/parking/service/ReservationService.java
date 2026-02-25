@@ -16,4 +16,5 @@ public interface ReservationService extends IService<Reservation> {
     boolean cancelReservation(Long id, Long userId);
     List<Reservation> getActiveReservations(Long parkingLotId, LocalDateTime startTime, LocalDateTime endTime);
     boolean updateReservationStatus(Long id, Integer status);
+    boolean payReservation(Long id);
 }

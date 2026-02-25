@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/members")
@@ -33,7 +34,13 @@ public class MemberController {
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size) {
         Page<Member> page = new Page<>(current, size);
-        return ResponseResult.success(memberService.page(page));
+        Page<Member> result = memberService.page(page);
+        // 填充 username
+        result.getRecords().forEach(m -> {
+            User u = userMapper.selectById(m.getUserId());
+            if (u != null) m.setUsername(u.getUsername());
+        });
+        return ResponseResult.success(result);
     }
 
     @GetMapping("/me")
@@ -59,6 +66,31 @@ public class MemberController {
         Long userId = getUserId(principal);
         member.setUserId(userId);
         return ResponseResult.success("开通会员成功", memberService.createMember(member));
+    }
+
+    // 管理员为指定用户创建会员
+    @PostMapping("/admin")
+    public ResponseResult<Member> createMemberByAdmin(@RequestBody Member member) {
+        if (member.getUserId() == null) return ResponseResult.error("请指定用户ID");
+        return ResponseResult.success("开通会员成功", memberService.createMember(member));
+    }
+
+    // 按用户名搜索用户（供管理员选择）
+    @GetMapping("/search-user")
+    public ResponseResult<?> searchUser(@RequestParam String keyword) {
+        List<User> users = userMapper.selectList(
+            new QueryWrapper<User>()
+                .like("username", keyword)
+                .or().like("phone", keyword)
+                .last("LIMIT 10")
+        );
+        return ResponseResult.success(users.stream().map(u -> {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", u.getId());
+            m.put("username", u.getUsername());
+            m.put("phone", u.getPhone());
+            return m;
+        }).collect(java.util.stream.Collectors.toList()));
     }
 
     @PutMapping("/{id}")

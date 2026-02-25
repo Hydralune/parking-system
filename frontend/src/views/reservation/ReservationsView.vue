@@ -14,7 +14,15 @@
       </div>
 
       <div class="content-wrap">
-        <!-- Empty state -->
+      <div class="member-banner" v-if="memberInfo && memberInfo.validTo && new Date(memberInfo.validTo) > new Date()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>{{ { 1: '普通会员', 2: '银卡会员', 3: '金卡会员', 4: '钻石会员' }[memberInfo.memberLevel] }}</span>
+        <span class="member-discount">享 {{ (memberInfo.discountRate * 10).toFixed(1) }} 折优惠</span>
+        <span class="member-points">积分：{{ memberInfo.points }}</span>
+        <span class="member-expire">有效期至 {{ memberInfo.validTo }}</span>
+      </div>
+
+      <!-- Empty state -->
         <div v-if="!loading && reservations.length === 0" class="empty-state">
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <p>暂无预约记录</p>
@@ -72,7 +80,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserReservations, cancelReservation as apiCancel } from '@/api/reservation'
+import { getUserReservations, cancelReservation as apiCancel, getMyMember } from '@/api/reservation'
 import HeaderNav from '@/components/HeaderNav.vue'
 
 export default {
@@ -83,6 +91,14 @@ export default {
     const reservations = ref([])
     const pagination = reactive({ current: 1, size: 10, total: 0 })
     const loading = ref(false)
+    const memberInfo = ref(null)
+
+    const fetchMember = async () => {
+      try {
+        const res = await getMyMember()
+        if (res.success) memberInfo.value = res.data
+      } catch (e) { /* 非会员正常忽略 */ }
+    }
 
     const formatDateTime = (dt) => dt ? new Date(dt).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-'
     const getStatusText = (s) => ({ 1: '待确认', 2: '已确认', 3: '已取消', 4: '已完成', 5: '已过期' }[s] || '未知')
@@ -99,7 +115,7 @@ export default {
       } catch (e) { ElMessage.error('获取失败：' + e.message) } finally { loading.value = false }
     }
 
-    const goToPayment = (r) => ElMessage.info(`跳转支付: ${r.id}`)
+    const goToPayment = (r) => router.push({ path: '/payment', state: { reservation: JSON.stringify(r) } })
 
     const cancelReservation = async (r) => {
       try {
@@ -112,8 +128,8 @@ export default {
 
     const handleSizeChange = (s) => { pagination.size = s; fetchReservations() }
     const handleCurrentChange = (c) => { pagination.current = c; fetchReservations() }
-    onMounted(fetchReservations)
-    return { reservations, pagination, loading, formatDateTime, getStatusText, getStatusClass, getPaymentText, getPaymentClass, goToPayment, cancelReservation, handleSizeChange, handleCurrentChange }
+    onMounted(() => { fetchReservations(); fetchMember() })
+    return { reservations, pagination, loading, memberInfo, formatDateTime, getStatusText, getStatusClass, getPaymentText, getPaymentClass, goToPayment, cancelReservation, handleSizeChange, handleCurrentChange }
   }
 }
 </script>
@@ -168,6 +184,18 @@ export default {
 .res-btn.pay:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(37,99,235,0.3); }
 .res-btn.cancel { background: #fef2f2; color: #dc2626; }
 .res-btn.cancel:hover { background: #fee2e2; }
+
+.member-banner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b; border-radius: 12px;
+  padding: 12px 20px; margin-bottom: 24px;
+  font-size: 14px; font-weight: 600; color: #92400e;
+}
+.member-banner svg { color: #f59e0b; flex-shrink: 0; }
+.member-discount { background: #f59e0b; color: white; padding: 2px 10px; border-radius: 100px; font-size: 13px; }
+.member-points { color: #b45309; }
+.member-expire { margin-left: auto; font-size: 12px; font-weight: 400; color: #b45309; }
 
 .pagination-wrap { display: flex; justify-content: center; margin-top: 32px; }
 

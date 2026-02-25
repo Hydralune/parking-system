@@ -17,28 +17,47 @@
             <div>
               <div class="lot-info-name">{{ parkingLotName }}</div>
               <div class="lot-info-stats">
-                <span class="stat-avail">{{ availableSpots }} 空位</span>
+                <span class="stat-avail">{{ parkingSpots.length }} 个空位</span>
                 <span class="stat-sep">·</span>
                 <span class="stat-total">共 {{ totalSpots }} 个</span>
               </div>
             </div>
           </div>
           <div class="spot-legend">
-            <div class="legend-item"><span class="legend-dot available"></span>可用</div>
-            <div class="legend-item"><span class="legend-dot booked"></span>已预订</div>
-            <div class="legend-item"><span class="legend-dot occupied"></span>已占用</div>
-            <div class="legend-item"><span class="legend-dot maintenance"></span>维护中</div>
+            <div class="legend-item"><span class="legend-dot available"></span>可用（点击选择）</div>
+            <div class="legend-item"><span class="legend-dot selected-dot"></span>已选中</div>
           </div>
         </div>
 
+        <!-- Zone filter -->
+        <div class="zone-filter-bar">
+          <span class="zone-label">选择区域：</span>
+          <button
+            class="zone-btn"
+            :class="{ active: selectedZone === '' }"
+            @click="filterZone('')"
+          >全部</button>
+          <button
+            v-for="z in zones"
+            :key="z"
+            class="zone-btn"
+            :class="{ active: selectedZone === z }"
+            @click="filterZone(z)"
+          >{{ z }} 区</button>
+        </div>
+
         <!-- Spots grid -->
-        <div class="spots-card">
-          <div class="spots-grid">
+        <div class="spots-card" v-loading="loading">
+          <div v-if="!loading && parkingSpots.length === 0" class="empty-spots">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <p>该区域暂无可用车位</p>
+          </div>
+          <div v-else class="spots-grid">
             <div
               v-for="spot in parkingSpots"
               :key="spot.id"
-              class="spot-cell"
-              :class="[getSpotClass(spot), { selected: selectedSpot?.id === spot.id }]"
+              class="spot-cell available"
+              :class="{ selected: selectedSpot?.id === spot.id }"
               @click="selectSpot(spot)"
             >
               <div class="spot-number">{{ spot.spotNumber }}</div>
@@ -71,8 +90,7 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { getParkingLotById } from '@/api/parking'
+import { getParkingLotById, getAvailableSpots, getParkingZones } from '@/api/parking'
 import HeaderNav from '@/components/HeaderNav.vue'
 
 export default {
@@ -83,48 +101,53 @@ export default {
     const router = useRouter()
     const parkingLotName = ref('停车场')
     const totalSpots = ref(0)
-    const availableSpots = ref(0)
     const parkingSpots = ref([])
+    const zones = ref([])
+    const selectedZone = ref('')
     const selectedSpot = ref(null)
+    const loading = ref(false)
 
-    const mockSpots = [
-      { id:1, spotNumber:'A001', spotType:1, status:1 }, { id:2, spotNumber:'A002', spotType:1, status:1 },
-      { id:3, spotNumber:'A003', spotType:1, status:2 }, { id:4, spotNumber:'A004', spotType:1, status:3 },
-      { id:5, spotNumber:'A005', spotType:1, status:1 }, { id:6, spotNumber:'B001', spotType:1, status:0 },
-      { id:7, spotNumber:'B002', spotType:1, status:1 }, { id:8, spotNumber:'B003', spotType:2, status:1 },
-      { id:9, spotNumber:'B004', spotType:1, status:1 }, { id:10, spotNumber:'B005', spotType:3, status:1 },
-      { id:11, spotNumber:'C001', spotType:1, status:1 }, { id:12, spotNumber:'C002', spotType:1, status:2 },
-      { id:13, spotNumber:'D001', spotType:3, status:1 }, { id:14, spotNumber:'D002', spotType:1, status:1 },
-      { id:15, spotNumber:'D003', spotType:1, status:3 },
-    ]
+    const getSpotTypeText = (t) => ({ 1: '小型车位', 2: '大型车位', 3: '残疾人专位' }[t] || '标准')
+    const getSpotTypeShort = (t) => ({ 1: '小', 2: '大', 3: '♿' }[t] || '标')
 
-    const getSpotClass = (s) => ({ 0:'maintenance', 1:'available', 2:'booked', 3:'occupied' }[s.status] || 'available')
-    const getSpotTypeText = (t) => ({ 1:'小型车位', 2:'大型车位', 3:'残疾人专位' }[t] || '标准')
-    const getSpotTypeShort = (t) => ({ 1:'小', 2:'大', 3:'♿' }[t] || '标')
+    const fetchSpots = async (zone) => {
+      loading.value = true
+      selectedSpot.value = null
+      try {
+        const res = await getAvailableSpots(route.params.parkingLotId, zone)
+        if (res.success) parkingSpots.value = res.data
+      } finally { loading.value = false }
+    }
+
+    const filterZone = (zone) => {
+      selectedZone.value = zone
+      fetchSpots(zone)
+    }
 
     const selectSpot = (spot) => {
-      if (spot.status !== 1) { ElMessage.warning('该车位不可用'); return }
       selectedSpot.value = selectedSpot.value?.id === spot.id ? null : spot
     }
 
     const goToReservation = () => {
       if (!selectedSpot.value) return
-      router.push({ name: 'CreateReservation', query: { parkingLotId: route.params.parkingLotId, spotId: selectedSpot.value.id } })
+      router.push({ name: 'CreateReservation', query: { parkingLotId: route.params.parkingLotId, spotId: selectedSpot.value.id, spotNumber: selectedSpot.value.spotNumber } })
     }
 
     const goBack = () => router.go(-1)
 
     onMounted(async () => {
       try {
-        const res = await getParkingLotById(route.params.parkingLotId)
-        if (res.success) { parkingLotName.value = res.data.name; totalSpots.value = res.data.totalSpots; availableSpots.value = res.data.availableSpots }
+        const [lotRes, zonesRes] = await Promise.all([
+          getParkingLotById(route.params.parkingLotId),
+          getParkingZones(route.params.parkingLotId)
+        ])
+        if (lotRes.success) { parkingLotName.value = lotRes.data.name; totalSpots.value = lotRes.data.totalSpots }
+        if (zonesRes.success) zones.value = zonesRes.data
       } catch (e) {}
-      parkingSpots.value = mockSpots
-      availableSpots.value = mockSpots.filter(s => s.status === 1).length
-      totalSpots.value = mockSpots.length
+      fetchSpots('')
     })
 
-    return { parkingLotName, totalSpots, availableSpots, parkingSpots, selectedSpot, getSpotClass, getSpotTypeText, getSpotTypeShort, selectSpot, goToReservation, goBack }
+    return { parkingLotName, totalSpots, parkingSpots, zones, selectedZone, selectedSpot, loading, getSpotTypeText, getSpotTypeShort, filterZone, selectSpot, goToReservation, goBack }
   }
 }
 </script>
@@ -135,7 +158,7 @@ export default {
 .back-btn { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: white; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: var(--transition); margin-bottom: 24px; }
 .back-btn:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-bg); }
 
-.lot-info-bar { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
+.lot-info-bar { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 16px; }
 .lot-info-left { display: flex; align-items: center; gap: 14px; }
 .lot-info-icon { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; }
 .lot-info-name { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
@@ -147,19 +170,21 @@ export default {
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); }
 .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
 .legend-dot.available { background: #10b981; }
-.legend-dot.booked { background: #f59e0b; }
-.legend-dot.occupied { background: #ef4444; }
-.legend-dot.maintenance { background: #94a3b8; }
+.legend-dot.selected-dot { background: var(--primary); }
 
-.spots-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 24px; }
+.zone-filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 14px 20px; margin-bottom: 16px; }
+.zone-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+.zone-btn { padding: 6px 16px; border-radius: 8px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
+.zone-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-bg); }
+.zone-btn.active { border-color: var(--primary); background: var(--primary); color: white; }
+
+.spots-card { background: white; border-radius: var(--radius-lg); border: 1px solid var(--border); padding: 24px; min-height: 200px; }
 .spots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; }
+.empty-spots { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-muted); gap: 12px; font-size: 14px; }
 
 .spot-cell { height: 80px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); border: 2px solid transparent; user-select: none; }
 .spot-cell.available { background: #f0fdf4; border-color: #86efac; }
 .spot-cell.available:hover { background: #dcfce7; border-color: #4ade80; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16,185,129,0.2); }
-.spot-cell.booked { background: #fffbeb; border-color: #fcd34d; cursor: not-allowed; }
-.spot-cell.occupied { background: #fef2f2; border-color: #fca5a5; cursor: not-allowed; }
-.spot-cell.maintenance { background: #f8fafc; border-color: #cbd5e1; cursor: not-allowed; opacity: 0.6; }
 .spot-cell.selected { border-color: var(--primary) !important; background: var(--primary-bg) !important; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
 .spot-number { font-size: 13px; font-weight: 700; color: var(--text-primary); }
 .spot-type-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }

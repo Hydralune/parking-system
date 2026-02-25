@@ -140,6 +140,7 @@ import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 import * as echarts from 'echarts'
 import { Document, Wallet, User, Place } from '@element-plus/icons-vue'
+import { getAdminStats } from '@/api/admin'
 
 export default {
   name: 'AdminDashboardView',
@@ -158,11 +159,56 @@ export default {
     })
 
     const statCards = ref([
-      { label: '总预约数', value: '1,284', trend: 12, icon: 'Document', bg: 'linear-gradient(135deg,#2563eb,#0ea5e9)' },
-      { label: '本月收入', value: '¥28,640', trend: 8, icon: 'Wallet', bg: 'linear-gradient(135deg,#059669,#10b981)' },
-      { label: '注册用户', value: '3,240', trend: 5, icon: 'User', bg: 'linear-gradient(135deg,#7c3aed,#a855f7)' },
-      { label: '停车场数', value: '12', trend: -2, icon: 'Place', bg: 'linear-gradient(135deg,#d97706,#f59e0b)' },
+      { label: '总预约数', value: '--', trend: 12, icon: 'Document', bg: 'linear-gradient(135deg,#2563eb,#0ea5e9)' },
+      { label: '本月收入', value: '--', trend: 8, icon: 'Wallet', bg: 'linear-gradient(135deg,#059669,#10b981)' },
+      { label: '注册用户', value: '--', trend: 5, icon: 'User', bg: 'linear-gradient(135deg,#7c3aed,#a855f7)' },
+      { label: '停车场数', value: '--', trend: 0, icon: 'Place', bg: 'linear-gradient(135deg,#d97706,#f59e0b)' },
     ])
+
+    const fetchStats = async () => {
+      try {
+        const res = await getAdminStats()
+        if (res.success) {
+          const d = res.data
+          statCards.value[0].value = d.totalReservations?.toString() || '0'
+          statCards.value[1].value = '¥' + (Number(d.monthlyIncome || 0).toFixed(0))
+          statCards.value[2].value = d.totalUsers?.toString() || '0'
+          statCards.value[3].value = d.totalParkingLots?.toString() || '0'
+
+          // 更新折线图（近7天真实数据）
+          if (d.weeklyReservations && lineChart) {
+            const days = d.weeklyReservations.map(item => item.day.slice(5)) // MM-DD
+            const vals = d.weeklyReservations.map(item => item.count)
+            lineChart.setOption({
+              xAxis: { data: days },
+              series: [{ data: vals }]
+            })
+          }
+
+          // 更新停车场使用率饼图
+          if (d.lotUsage && pieChart) {
+            const pieData = d.lotUsage.map((lot, i) => ({
+              value: lot.occupied,
+              name: lot.name,
+              itemStyle: { color: ['#2563eb', '#0ea5e9', '#7c3aed'][i] || '#e2e8f0' }
+            }))
+            pieChart.setOption({ series: [{ data: pieData }] })
+          }
+
+          // 更新会员等级分布
+          if (d.memberDistribution && memberChart) {
+            const levelNames = { 1: '普通会员', 2: '银卡会员', 3: '金卡会员', 4: '钻石会员' }
+            const levelColors = { 1: '#94a3b8', 2: '#0ea5e9', 3: '#f59e0b', 4: '#7c3aed' }
+            const memberData = Object.entries(d.memberDistribution).map(([level, cnt]) => ({
+              value: cnt,
+              name: levelNames[level] || `等级${level}`,
+              itemStyle: { color: levelColors[level] || '#e2e8f0' }
+            }))
+            memberChart.setOption({ series: [{ data: memberData }] })
+          }
+        }
+      } catch (e) {}
+    }
 
     const lineData = {
       '7天': { days: ['周一','周二','周三','周四','周五','周六','周日'], vals: [42,58,65,48,72,89,76] },
@@ -251,6 +297,7 @@ export default {
 
     onMounted(() => {
       initLineChart(); initPieChart(); initBarChart(); initMemberChart()
+      fetchStats()
       window.addEventListener('resize', handleResize)
     })
     onUnmounted(() => {
@@ -258,7 +305,7 @@ export default {
       lineChart?.dispose(); pieChart?.dispose(); barChart?.dispose(); memberChart?.dispose()
     })
 
-    return { userStore, statCards, lineChartRef, pieChartRef, barChartRef, memberChartRef, activeTab, currentDate, updateLineChart }
+    return { userStore, statCards, lineChartRef, pieChartRef, barChartRef, memberChartRef, activeTab, currentDate, updateLineChart, fetchStats }
   }
 }
 </script>

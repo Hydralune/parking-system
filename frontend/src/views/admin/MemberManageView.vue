@@ -63,7 +63,20 @@
 
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="520px" :before-close="handleClose">
       <el-form :model="memberForm" :rules="memberRules" ref="memberFormRef" label-width="100px" class="dialog-form">
-        <el-form-item label="用户ID" prop="userId"><el-input v-model="memberForm.userId" placeholder="请输入用户ID" /></el-form-item>
+        <el-form-item label="用户" prop="userId">
+          <el-select
+            v-model="memberForm.userId"
+            filterable
+            remote
+            :remote-method="handleUserSearch"
+            :loading="userSearchLoading"
+            placeholder="输入用户名或手机号搜索"
+            style="width:100%"
+            :disabled="isEdit"
+          >
+            <el-option v-for="u in userOptions" :key="u.id" :label="`${u.username}（${u.phone || '无手机号'}）`" :value="u.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="会员等级" prop="memberLevel">
           <el-select v-model="memberForm.memberLevel" placeholder="选择等级">
             <el-option label="普通会员" :value="1" />
@@ -91,7 +104,7 @@
 <script>
 import { ref, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getMembers, createMember, updateMember as apiUpdate, deleteMember as apiDelete } from '@/api/admin'
+import { getMembers, createMemberByAdmin, updateMember as apiUpdate, deleteMember as apiDelete, searchUser } from '@/api/admin'
 
 export default {
   name: 'MemberManageView',
@@ -104,8 +117,19 @@ export default {
     const isEdit = ref(false)
     const memberFormRef = ref(null)
     const memberForm = reactive({ id: null, userId: null, memberLevel: 1, points: 0, discountRate: 1.0, validFrom: null, validTo: null })
-    const memberRules = { userId: [{ required: true, message: '请输入用户ID', trigger: 'blur' }], memberLevel: [{ required: true, message: '请选择等级', trigger: 'change' }] }
+    const memberRules = { userId: [{ required: true, message: '请选择用户', trigger: 'change' }], memberLevel: [{ required: true, message: '请选择等级', trigger: 'change' }] }
     const dialogTitle = computed(() => isEdit.value ? '编辑会员' : '添加会员')
+    const userOptions = ref([])
+    const userSearchLoading = ref(false)
+
+    const handleUserSearch = async (keyword) => {
+      if (!keyword) return
+      userSearchLoading.value = true
+      try {
+        const res = await searchUser(keyword)
+        if (res.success) userOptions.value = res.data
+      } finally { userSearchLoading.value = false }
+    }
 
     const getLevelText = (l) => ({ 1: '普通会员', 2: '银卡会员', 3: '金卡会员', 4: '钻石会员' }[l] || '未知')
 
@@ -129,7 +153,7 @@ export default {
         if (!valid) return
         submitLoading.value = true
         try {
-          const res = isEdit.value ? await apiUpdate(memberForm.id, memberForm) : await createMember(memberForm)
+          const res = isEdit.value ? await apiUpdate(memberForm.id, memberForm) : await createMemberByAdmin(memberForm)
           if (res.success) { ElMessage.success(isEdit.value ? '更新成功' : '添加成功'); dialogVisible.value = false; resetForm(); fetchMembers() }
           else ElMessage.error(res.message || '操作失败')
         } catch (e) { ElMessage.error('操作失败：' + e.message) } finally { submitLoading.value = false }
@@ -148,7 +172,7 @@ export default {
     const handleSizeChange = (s) => { pagination.size = s; fetchMembers() }
     const handleCurrentChange = (c) => { pagination.current = c; fetchMembers() }
     fetchMembers()
-    return { members, pagination, loading, submitLoading, dialogVisible, isEdit, memberFormRef, memberForm, memberRules, dialogTitle, getLevelText, showAddDialog, showEditDialog, handleClose, submitForm, deleteMember, handleSizeChange, handleCurrentChange }
+    return { members, pagination, loading, submitLoading, dialogVisible, isEdit, memberFormRef, memberForm, memberRules, dialogTitle, getLevelText, showAddDialog, showEditDialog, handleClose, submitForm, deleteMember, handleSizeChange, handleCurrentChange, userOptions, userSearchLoading, handleUserSearch }
   }
 }
 </script>

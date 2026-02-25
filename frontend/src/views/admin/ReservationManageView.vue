@@ -22,17 +22,27 @@
       <div class="table-card">
         <el-table :data="reservations" v-loading="loading" class="modern-table">
           <el-table-column prop="id" label="ID" width="70" />
-          <el-table-column prop="userId" label="用户ID" width="90" />
-          <el-table-column prop="parkingLotName" label="停车场" min-width="160" show-overflow-tooltip />
-          <el-table-column prop="spotNumber" label="车位号" width="100" />
-          <el-table-column prop="startTime" label="开始时间" width="160" />
-          <el-table-column prop="endTime" label="结束时间" width="160" />
+          <el-table-column label="用户" width="110">
+            <template #default="{ row }">{{ row.username || ('用户' + row.userId) }}</template>
+          </el-table-column>
+          <el-table-column prop="parkingLotName" label="停车场" min-width="150" show-overflow-tooltip />
+          <el-table-column prop="spotNumber" label="车位号" width="90" />
+          <el-table-column prop="licensePlate" label="车牌号" width="100" />
+          <el-table-column prop="startTime" label="开始时间" width="155" />
+          <el-table-column prop="endTime" label="结束时间" width="155" />
           <el-table-column label="费用" width="100">
             <template #default="{ row }"><span class="price-tag">¥{{ row.totalFee || '-' }}</span></template>
           </el-table-column>
           <el-table-column label="状态" width="110">
             <template #default="{ row }">
-              <span class="status-badge" :class="getStatusClass(row.status)">{{ getStatusText(row.status) }}</span>
+              <span class="status-badge" :class="getStatusClass(row.reservationStatus)">{{ getStatusText(row.reservationStatus) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="支付" width="100">
+            <template #default="{ row }">
+              <span class="status-badge" :class="row.paymentStatus === 1 ? 'success' : row.paymentStatus === 2 ? 'warning' : 'danger'">
+                {{ { 0: '未支付', 1: '已支付', 2: '已退款' }[row.paymentStatus] || '-' }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column label="操作" width="180" fixed="right">
@@ -55,10 +65,11 @@
         <el-form-item label="预约ID"><el-input :value="editForm.id" disabled /></el-form-item>
         <el-form-item label="状态">
           <el-select v-model="editForm.status" placeholder="选择状态">
-            <el-option label="待确认" :value="0" />
-            <el-option label="已确认" :value="1" />
-            <el-option label="已完成" :value="2" />
+            <el-option label="待确认" :value="1" />
+            <el-option label="已确认" :value="2" />
             <el-option label="已取消" :value="3" />
+            <el-option label="已完成" :value="4" />
+            <el-option label="已过期" :value="5" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -85,8 +96,8 @@ export default {
     const dialogVisible = ref(false)
     const editForm = reactive({ id: null, status: 0 })
 
-    const getStatusText = (s) => ({ 0: '待确认', 1: '已确认', 2: '已完成', 3: '已取消' }[s] || '未知')
-    const getStatusClass = (s) => ({ 0: 'warning', 1: 'info', 2: 'success', 3: 'danger' }[s] || 'info')
+    const getStatusText = (s) => ({ 1: '待确认', 2: '已确认', 3: '已取消', 4: '已完成', 5: '已过期' }[s] || '未知')
+    const getStatusClass = (s) => ({ 1: 'warning', 2: 'info', 3: 'danger', 4: 'success', 5: 'danger' }[s] || 'info')
 
     const fetchReservations = async () => {
       loading.value = true
@@ -97,7 +108,7 @@ export default {
       } catch (e) { ElMessage.error('获取失败：' + e.message) } finally { loading.value = false }
     }
 
-    const showEditDialog = (row) => { Object.assign(editForm, { id: row.id, status: row.status }); dialogVisible.value = true }
+    const showEditDialog = (row) => { Object.assign(editForm, { id: row.id, status: row.reservationStatus }); dialogVisible.value = true }
 
     const submitEdit = async () => {
       submitLoading.value = true

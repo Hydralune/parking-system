@@ -1,0 +1,901 @@
+/*
+ Navicat Premium Data Transfer
+
+ Source Server         : MySQL
+ Source Server Type    : MySQL
+ Source Server Version : 80044 (8.0.44)
+ Source Host           : localhost:3306
+ Source Schema         : parking_system
+
+ Target Server Type    : MySQL
+ Target Server Version : 80044 (8.0.44)
+ File Encoding         : 65001
+
+ Date: 25/02/2026 11:51:37
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for member
+-- ----------------------------
+DROP TABLE IF EXISTS `member`;
+CREATE TABLE `member`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '会员ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `member_level` tinyint NULL DEFAULT 1 COMMENT '会员等级: 1-普通, 2-银卡, 3-金卡, 4-钻石',
+  `points` int NULL DEFAULT 0 COMMENT '会员积分',
+  `discount_rate` decimal(5, 2) NULL DEFAULT 1.00 COMMENT '会员折扣',
+  `valid_from` date NULL DEFAULT NULL COMMENT '有效期开始',
+  `valid_to` date NULL DEFAULT NULL COMMENT '有效期结束',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_member_level`(`member_level` ASC) USING BTREE,
+  INDEX `idx_valid_to`(`valid_to` ASC) USING BTREE,
+  CONSTRAINT `fk_member_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `member_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '会员信息表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of member
+-- ----------------------------
+INSERT INTO `member` VALUES (2, 9, 1, 2, 0.20, '2026-02-01', '2028-02-29', '2026-02-25 10:24:57', '2026-02-25 10:24:57');
+INSERT INTO `member` VALUES (3, 2, 3, 3200, 0.75, '2025-06-01', '2027-06-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (4, 3, 2, 1850, 0.85, '2025-09-01', '2026-09-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (5, 4, 4, 8800, 0.60, '2025-01-01', '2028-01-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (6, 5, 1, 420, 0.95, '2026-01-01', '2027-01-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (7, 6, 3, 4100, 0.75, '2025-07-15', '2027-07-15', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (8, 7, 2, 2200, 0.85, '2025-11-01', '2026-11-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (9, 8, 4, 12500, 0.60, '2024-08-01', '2027-08-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (10, 10, 1, 680, 0.95, '2026-02-01', '2027-02-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (11, 11, 2, 1500, 0.85, '2025-10-01', '2026-10-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (12, 12, 3, 3800, 0.75, '2025-05-01', '2027-05-01', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+INSERT INTO `member` VALUES (13, 13, 1, 200, 0.95, '2026-02-20', '2027-02-20', '2026-02-25 11:48:59', '2026-02-25 11:48:59');
+
+-- ----------------------------
+-- Table structure for parking_lot
+-- ----------------------------
+DROP TABLE IF EXISTS `parking_lot`;
+CREATE TABLE `parking_lot`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '停车场ID',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '停车场名称',
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '地址',
+  `longitude` decimal(10, 7) NULL DEFAULT NULL COMMENT '经度',
+  `latitude` decimal(10, 7) NULL DEFAULT NULL COMMENT '纬度',
+  `total_spots` int NULL DEFAULT 0 COMMENT '总车位数',
+  `available_spots` int NULL DEFAULT 0 COMMENT '剩余车位数',
+  `hourly_rate` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '每小时费用',
+  `opening_time` time NULL DEFAULT NULL COMMENT '营业开始时间',
+  `closing_time` time NULL DEFAULT NULL COMMENT '营业结束时间',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '联系电话',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL COMMENT '描述',
+  `status` tinyint NULL DEFAULT 1 COMMENT '状态: 0-关闭, 1-营业中',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_location`(`longitude` ASC, `latitude` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '停车场表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of parking_lot
+-- ----------------------------
+INSERT INTO `parking_lot` VALUES (1, '中央商务区停车场', '北京市朝阳区建国路88号', 116.4614000, 39.9042000, 200, 20, 8.00, '00:00:00', '23:59:59', '010-88001234', '位于CBD核心区域，24小时开放，配备智能导航系统', 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_lot` VALUES (2, '万象城购物中心停车场', '北京市海淀区中关村大街1号', 116.3175000, 39.9839000, 120, 15, 6.00, '08:00:00', '22:00:00', '010-62001234', '紧邻万象城购物中心，购物满200元可享2小时免费停车', 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_lot` VALUES (3, '国际机场T3航站楼停车场', '北京市顺义区天竺镇', 116.5883000, 40.0799000, 300, 45, 12.00, '00:00:00', '23:59:59', '010-96001234', '机场专属停车场，提供行李寄存、接送机服务', 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+
+-- ----------------------------
+-- Table structure for parking_spot
+-- ----------------------------
+DROP TABLE IF EXISTS `parking_spot`;
+CREATE TABLE `parking_spot`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '车位ID',
+  `parking_lot_id` bigint NOT NULL COMMENT '停车场ID',
+  `spot_number` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '车位编号',
+  `spot_type` tinyint NULL DEFAULT 1 COMMENT '车位类型: 1-小型车, 2-大型车, 3-残疾人专位',
+  `status` tinyint NULL DEFAULT 1 COMMENT '状态: 0-维护中, 1-可用, 2-已预订, 3-已占用',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `uk_parking_lot_spot`(`parking_lot_id` ASC, `spot_number` ASC) USING BTREE,
+  INDEX `idx_parking_lot_id`(`parking_lot_id` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE,
+  CONSTRAINT `parking_spot_ibfk_1` FOREIGN KEY (`parking_lot_id`) REFERENCES `parking_lot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 621 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '车位表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of parking_spot
+-- ----------------------------
+INSERT INTO `parking_spot` VALUES (1, 1, 'A001', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (2, 1, 'A002', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (3, 1, 'A003', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (4, 1, 'A004', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (5, 1, 'A005', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (6, 1, 'A006', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (7, 1, 'A007', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (8, 1, 'A008', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (9, 1, 'A009', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (10, 1, 'A010', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (11, 1, 'A011', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (12, 1, 'A012', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (13, 1, 'A013', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (14, 1, 'A014', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (15, 1, 'A015', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (16, 1, 'A016', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (17, 1, 'A017', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (18, 1, 'A018', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (19, 1, 'A019', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (20, 1, 'A020', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (21, 1, 'A021', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (22, 1, 'A022', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (23, 1, 'A023', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (24, 1, 'A024', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (25, 1, 'A025', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (26, 1, 'A026', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (27, 1, 'A027', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (28, 1, 'A028', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (29, 1, 'A029', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (30, 1, 'A030', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (31, 1, 'A031', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (32, 1, 'A032', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (33, 1, 'A033', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (34, 1, 'A034', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (35, 1, 'A035', 2, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (36, 1, 'A036', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (37, 1, 'A037', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (38, 1, 'A038', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (39, 1, 'A039', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (40, 1, 'A040', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (41, 1, 'A041', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (42, 1, 'A042', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (43, 1, 'A043', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (44, 1, 'A044', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (45, 1, 'A045', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (46, 1, 'A046', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (47, 1, 'A047', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (48, 1, 'A048', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (49, 1, 'A049', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (50, 1, 'A050', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (51, 1, 'B001', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (52, 1, 'B002', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (53, 1, 'B003', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (54, 1, 'B004', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (55, 1, 'B005', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (56, 1, 'B006', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (57, 1, 'B007', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (58, 1, 'B008', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (59, 1, 'B009', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (60, 1, 'B010', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (61, 1, 'B011', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (62, 1, 'B012', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (63, 1, 'B013', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (64, 1, 'B014', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (65, 1, 'B015', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (66, 1, 'B016', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (67, 1, 'B017', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (68, 1, 'B018', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (69, 1, 'B019', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (70, 1, 'B020', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (71, 1, 'B021', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (72, 1, 'B022', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (73, 1, 'B023', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (74, 1, 'B024', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (75, 1, 'B025', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (76, 1, 'B026', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (77, 1, 'B027', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (78, 1, 'B028', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (79, 1, 'B029', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (80, 1, 'B030', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (81, 1, 'B031', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (82, 1, 'B032', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (83, 1, 'B033', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (84, 1, 'B034', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (85, 1, 'B035', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (86, 1, 'B036', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (87, 1, 'B037', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (88, 1, 'B038', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (89, 1, 'B039', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (90, 1, 'B040', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (91, 1, 'B041', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (92, 1, 'B042', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (93, 1, 'B043', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (94, 1, 'B044', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (95, 1, 'B045', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (96, 1, 'B046', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (97, 1, 'B047', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (98, 1, 'B048', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (99, 1, 'B049', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (100, 1, 'B050', 3, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (101, 1, 'C001', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (102, 1, 'C002', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (103, 1, 'C003', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (104, 1, 'C004', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (105, 1, 'C005', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (106, 1, 'C006', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (107, 1, 'C007', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (108, 1, 'C008', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (109, 1, 'C009', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (110, 1, 'C010', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (111, 1, 'C011', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (112, 1, 'C012', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (113, 1, 'C013', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (114, 1, 'C014', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (115, 1, 'C015', 3, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (116, 1, 'C016', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (117, 1, 'C017', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (118, 1, 'C018', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (119, 1, 'C019', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (120, 1, 'C020', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (121, 1, 'C021', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (122, 1, 'C022', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (123, 1, 'C023', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (124, 1, 'C024', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (125, 1, 'C025', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (126, 1, 'C026', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (127, 1, 'C027', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (128, 1, 'C028', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (129, 1, 'C029', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (130, 1, 'C030', 3, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (131, 1, 'C031', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (132, 1, 'C032', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (133, 1, 'C033', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (134, 1, 'C034', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (135, 1, 'C035', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (136, 1, 'C036', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (137, 1, 'C037', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (138, 1, 'C038', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (139, 1, 'C039', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (140, 1, 'C040', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (141, 1, 'C041', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (142, 1, 'C042', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (143, 1, 'C043', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (144, 1, 'C044', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (145, 1, 'C045', 3, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (146, 1, 'C046', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (147, 1, 'C047', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (148, 1, 'C048', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (149, 1, 'C049', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (150, 1, 'C050', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (151, 1, 'D001', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (152, 1, 'D002', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (153, 1, 'D003', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (154, 1, 'D004', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (155, 1, 'D005', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (156, 1, 'D006', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (157, 1, 'D007', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (158, 1, 'D008', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (159, 1, 'D009', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (160, 1, 'D010', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (161, 1, 'D011', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (162, 1, 'D012', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (163, 1, 'D013', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (164, 1, 'D014', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (165, 1, 'D015', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (166, 1, 'D016', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (167, 1, 'D017', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (168, 1, 'D018', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (169, 1, 'D019', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (170, 1, 'D020', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (171, 1, 'D021', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (172, 1, 'D022', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (173, 1, 'D023', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (174, 1, 'D024', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (175, 1, 'D025', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (176, 1, 'D026', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (177, 1, 'D027', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (178, 1, 'D028', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (179, 1, 'D029', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (180, 1, 'D030', 3, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (181, 1, 'D031', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (182, 1, 'D032', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (183, 1, 'D033', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (184, 1, 'D034', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (185, 1, 'D035', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (186, 1, 'D036', 2, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (187, 1, 'D037', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (188, 1, 'D038', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (189, 1, 'D039', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (190, 1, 'D040', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (191, 1, 'D041', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (192, 1, 'D042', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (193, 1, 'D043', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (194, 1, 'D044', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (195, 1, 'D045', 2, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (196, 1, 'D046', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (197, 1, 'D047', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (198, 1, 'D048', 1, 3, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (199, 1, 'D049', 1, 1, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (200, 1, 'D050', 3, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (201, 2, 'E001', 1, 2, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `parking_spot` VALUES (202, 2, 'E002', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (203, 2, 'E003', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (204, 2, 'E004', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (205, 2, 'E005', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (206, 2, 'E006', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (207, 2, 'E007', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (208, 2, 'E008', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (209, 2, 'E009', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (210, 2, 'E010', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (211, 2, 'E011', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (212, 2, 'E012', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (213, 2, 'E013', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (214, 2, 'E014', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (215, 2, 'E015', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (216, 2, 'E016', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (217, 2, 'E017', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (218, 2, 'E018', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (219, 2, 'E019', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (220, 2, 'E020', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (221, 2, 'E021', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (222, 2, 'E022', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (223, 2, 'E023', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (224, 2, 'E024', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (225, 2, 'E025', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (226, 2, 'E026', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (227, 2, 'E027', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (228, 2, 'E028', 2, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (229, 2, 'E029', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (230, 2, 'E030', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (231, 2, 'E031', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (232, 2, 'E032', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (233, 2, 'E033', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (234, 2, 'E034', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (235, 2, 'E035', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (236, 2, 'E036', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (237, 2, 'E037', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (238, 2, 'E038', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (239, 2, 'E039', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (240, 2, 'E040', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (241, 2, 'E041', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (242, 2, 'E042', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (243, 2, 'E043', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (244, 2, 'E044', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (245, 2, 'E045', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (246, 2, 'E046', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (247, 2, 'E047', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (248, 2, 'E048', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (249, 2, 'E049', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (250, 2, 'E050', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (251, 2, 'E051', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (252, 2, 'E052', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (253, 2, 'E053', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (254, 2, 'E054', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (255, 2, 'E055', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (256, 2, 'E056', 2, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (257, 2, 'E057', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (258, 2, 'E058', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (259, 2, 'E059', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (260, 2, 'E060', 3, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (261, 2, 'F001', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (262, 2, 'F002', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (263, 2, 'F003', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (264, 2, 'F004', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (265, 2, 'F005', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (266, 2, 'F006', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (267, 2, 'F007', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (268, 2, 'F008', 2, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (269, 2, 'F009', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (270, 2, 'F010', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (271, 2, 'F011', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (272, 2, 'F012', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (273, 2, 'F013', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (274, 2, 'F014', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (275, 2, 'F015', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (276, 2, 'F016', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (277, 2, 'F017', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (278, 2, 'F018', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (279, 2, 'F019', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (280, 2, 'F020', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (281, 2, 'F021', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (282, 2, 'F022', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (283, 2, 'F023', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (284, 2, 'F024', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (285, 2, 'F025', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (286, 2, 'F026', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (287, 2, 'F027', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (288, 2, 'F028', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (289, 2, 'F029', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (290, 2, 'F030', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (291, 2, 'F031', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (292, 2, 'F032', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (293, 2, 'F033', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (294, 2, 'F034', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (295, 2, 'F035', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (296, 2, 'F036', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (297, 2, 'F037', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (298, 2, 'F038', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (299, 2, 'F039', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (300, 2, 'F040', 2, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (301, 2, 'F041', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (302, 2, 'F042', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (303, 2, 'F043', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (304, 2, 'F044', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (305, 2, 'F045', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (306, 2, 'F046', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (307, 2, 'F047', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (308, 2, 'F048', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (309, 2, 'F049', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (310, 2, 'F050', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (311, 2, 'F051', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (312, 2, 'F052', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (313, 2, 'F053', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (314, 2, 'F054', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (315, 2, 'F055', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (316, 2, 'F056', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (317, 2, 'F057', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (318, 2, 'F058', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (319, 2, 'F059', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (320, 2, 'F060', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (321, 3, 'G001', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (322, 3, 'G002', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (323, 3, 'G003', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (324, 3, 'G004', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (325, 3, 'G005', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (326, 3, 'G006', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (327, 3, 'G007', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (328, 3, 'G008', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (329, 3, 'G009', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (330, 3, 'G010', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (331, 3, 'G011', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (332, 3, 'G012', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (333, 3, 'G013', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (334, 3, 'G014', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (335, 3, 'G015', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (336, 3, 'G016', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (337, 3, 'G017', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (338, 3, 'G018', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (339, 3, 'G019', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (340, 3, 'G020', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (341, 3, 'G021', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (342, 3, 'G022', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (343, 3, 'G023', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (344, 3, 'G024', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (345, 3, 'G025', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (346, 3, 'G026', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (347, 3, 'G027', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (348, 3, 'G028', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (349, 3, 'G029', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (350, 3, 'G030', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (351, 3, 'G031', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (352, 3, 'G032', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (353, 3, 'G033', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (354, 3, 'G034', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (355, 3, 'G035', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (356, 3, 'G036', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (357, 3, 'G037', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (358, 3, 'G038', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (359, 3, 'G039', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (360, 3, 'G040', 2, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (361, 3, 'G041', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (362, 3, 'G042', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (363, 3, 'G043', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (364, 3, 'G044', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (365, 3, 'G045', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (366, 3, 'G046', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (367, 3, 'G047', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (368, 3, 'G048', 2, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (369, 3, 'G049', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (370, 3, 'G050', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (371, 3, 'H001', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (372, 3, 'H002', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (373, 3, 'H003', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (374, 3, 'H004', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (375, 3, 'H005', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (376, 3, 'H006', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (377, 3, 'H007', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (378, 3, 'H008', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (379, 3, 'H009', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (380, 3, 'H010', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (381, 3, 'H011', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (382, 3, 'H012', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (383, 3, 'H013', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (384, 3, 'H014', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (385, 3, 'H015', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (386, 3, 'H016', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (387, 3, 'H017', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (388, 3, 'H018', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (389, 3, 'H019', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (390, 3, 'H020', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (391, 3, 'H021', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (392, 3, 'H022', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (393, 3, 'H023', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (394, 3, 'H024', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (395, 3, 'H025', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (396, 3, 'H026', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (397, 3, 'H027', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (398, 3, 'H028', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (399, 3, 'H029', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (400, 3, 'H030', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (401, 3, 'H031', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (402, 3, 'H032', 2, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (403, 3, 'H033', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (404, 3, 'H034', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (405, 3, 'H035', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (406, 3, 'H036', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (407, 3, 'H037', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (408, 3, 'H038', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (409, 3, 'H039', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (410, 3, 'H040', 2, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (411, 3, 'H041', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (412, 3, 'H042', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (413, 3, 'H043', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (414, 3, 'H044', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (415, 3, 'H045', 1, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (416, 3, 'H046', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (417, 3, 'H047', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (418, 3, 'H048', 2, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (419, 3, 'H049', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (420, 3, 'H050', 3, 3, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (421, 3, 'I001', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (422, 3, 'I002', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (423, 3, 'I003', 1, 1, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (424, 3, 'I004', 1, 2, '2026-02-25 10:54:42', '2026-02-25 10:54:42');
+INSERT INTO `parking_spot` VALUES (425, 3, 'I005', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (426, 3, 'I006', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (427, 3, 'I007', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (428, 3, 'I008', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (429, 3, 'I009', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (430, 3, 'I010', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (431, 3, 'I011', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (432, 3, 'I012', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (433, 3, 'I013', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (434, 3, 'I014', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (435, 3, 'I015', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (436, 3, 'I016', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (437, 3, 'I017', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (438, 3, 'I018', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (439, 3, 'I019', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (440, 3, 'I020', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (441, 3, 'I021', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (442, 3, 'I022', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (443, 3, 'I023', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (444, 3, 'I024', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (445, 3, 'I025', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (446, 3, 'I026', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (447, 3, 'I027', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (448, 3, 'I028', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (449, 3, 'I029', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (450, 3, 'I030', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (451, 3, 'I031', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (452, 3, 'I032', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (453, 3, 'I033', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (454, 3, 'I034', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (455, 3, 'I035', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (456, 3, 'I036', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (457, 3, 'I037', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (458, 3, 'I038', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (459, 3, 'I039', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (460, 3, 'I040', 2, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (461, 3, 'I041', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (462, 3, 'I042', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (463, 3, 'I043', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (464, 3, 'I044', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (465, 3, 'I045', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (466, 3, 'I046', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (467, 3, 'I047', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (468, 3, 'I048', 2, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (469, 3, 'I049', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (470, 3, 'I050', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (471, 3, 'J001', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (472, 3, 'J002', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (473, 3, 'J003', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (474, 3, 'J004', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (475, 3, 'J005', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (476, 3, 'J006', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (477, 3, 'J007', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (478, 3, 'J008', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (479, 3, 'J009', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (480, 3, 'J010', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (481, 3, 'J011', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (482, 3, 'J012', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (483, 3, 'J013', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (484, 3, 'J014', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (485, 3, 'J015', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (486, 3, 'J016', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (487, 3, 'J017', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (488, 3, 'J018', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (489, 3, 'J019', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (490, 3, 'J020', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (491, 3, 'J021', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (492, 3, 'J022', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (493, 3, 'J023', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (494, 3, 'J024', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (495, 3, 'J025', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (496, 3, 'J026', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (497, 3, 'J027', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (498, 3, 'J028', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (499, 3, 'J029', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (500, 3, 'J030', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (501, 3, 'J031', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (502, 3, 'J032', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (503, 3, 'J033', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (504, 3, 'J034', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (505, 3, 'J035', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (506, 3, 'J036', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (507, 3, 'J037', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (508, 3, 'J038', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (509, 3, 'J039', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (510, 3, 'J040', 2, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (511, 3, 'J041', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (512, 3, 'J042', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (513, 3, 'J043', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (514, 3, 'J044', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (515, 3, 'J045', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (516, 3, 'J046', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (517, 3, 'J047', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (518, 3, 'J048', 2, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (519, 3, 'J049', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (520, 3, 'J050', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (521, 3, 'K001', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (522, 3, 'K002', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (523, 3, 'K003', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (524, 3, 'K004', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (525, 3, 'K005', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (526, 3, 'K006', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (527, 3, 'K007', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (528, 3, 'K008', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (529, 3, 'K009', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (530, 3, 'K010', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (531, 3, 'K011', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (532, 3, 'K012', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (533, 3, 'K013', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (534, 3, 'K014', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (535, 3, 'K015', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (536, 3, 'K016', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (537, 3, 'K017', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (538, 3, 'K018', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (539, 3, 'K019', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (540, 3, 'K020', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (541, 3, 'K021', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (542, 3, 'K022', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (543, 3, 'K023', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (544, 3, 'K024', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (545, 3, 'K025', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (546, 3, 'K026', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (547, 3, 'K027', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (548, 3, 'K028', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (549, 3, 'K029', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (550, 3, 'K030', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (551, 3, 'K031', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (552, 3, 'K032', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (553, 3, 'K033', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (554, 3, 'K034', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (555, 3, 'K035', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (556, 3, 'K036', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (557, 3, 'K037', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (558, 3, 'K038', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (559, 3, 'K039', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (560, 3, 'K040', 2, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (561, 3, 'K041', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (562, 3, 'K042', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (563, 3, 'K043', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (564, 3, 'K044', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (565, 3, 'K045', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (566, 3, 'K046', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (567, 3, 'K047', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (568, 3, 'K048', 2, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (569, 3, 'K049', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (570, 3, 'K050', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (571, 3, 'L001', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (572, 3, 'L002', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (573, 3, 'L003', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (574, 3, 'L004', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (575, 3, 'L005', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (576, 3, 'L006', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (577, 3, 'L007', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (578, 3, 'L008', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (579, 3, 'L009', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (580, 3, 'L010', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (581, 3, 'L011', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (582, 3, 'L012', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (583, 3, 'L013', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (584, 3, 'L014', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (585, 3, 'L015', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (586, 3, 'L016', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (587, 3, 'L017', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (588, 3, 'L018', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (589, 3, 'L019', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (590, 3, 'L020', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (591, 3, 'L021', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (592, 3, 'L022', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (593, 3, 'L023', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (594, 3, 'L024', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (595, 3, 'L025', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (596, 3, 'L026', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (597, 3, 'L027', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (598, 3, 'L028', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (599, 3, 'L029', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (600, 3, 'L030', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (601, 3, 'L031', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (602, 3, 'L032', 2, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (603, 3, 'L033', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (604, 3, 'L034', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (605, 3, 'L035', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (606, 3, 'L036', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (607, 3, 'L037', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (608, 3, 'L038', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (609, 3, 'L039', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (610, 3, 'L040', 2, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (611, 3, 'L041', 1, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (612, 3, 'L042', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (613, 3, 'L043', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (614, 3, 'L044', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (615, 3, 'L045', 1, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (616, 3, 'L046', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (617, 3, 'L047', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (618, 3, 'L048', 2, 1, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (619, 3, 'L049', 1, 2, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+INSERT INTO `parking_spot` VALUES (620, 3, 'L050', 3, 3, '2026-02-25 10:54:43', '2026-02-25 10:54:43');
+
+-- ----------------------------
+-- Table structure for pricing_rule
+-- ----------------------------
+DROP TABLE IF EXISTS `pricing_rule`;
+CREATE TABLE `pricing_rule`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '规则ID',
+  `parking_lot_id` bigint NOT NULL COMMENT '停车场ID',
+  `rule_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规则名称',
+  `pricing_type` tinyint NULL DEFAULT 1 COMMENT '计费类型: 1-按时, 2-按次, 3-包月',
+  `base_fee` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '基础费用',
+  `hourly_rate` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '每小时费用',
+  `daily_cap` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '每日上限',
+  `discount_start_time` time NULL DEFAULT NULL COMMENT '优惠时段开始时间',
+  `discount_end_time` time NULL DEFAULT NULL COMMENT '优惠时段结束时间',
+  `discount_rate` decimal(5, 2) NULL DEFAULT 1.00 COMMENT '优惠费率',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_parking_lot_id`(`parking_lot_id` ASC) USING BTREE,
+  CONSTRAINT `fk_pricing_rule_parking_lot` FOREIGN KEY (`parking_lot_id`) REFERENCES `parking_lot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `pricing_rule_ibfk_1` FOREIGN KEY (`parking_lot_id`) REFERENCES `parking_lot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '计费规则表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of pricing_rule
+-- ----------------------------
+INSERT INTO `pricing_rule` VALUES (1, 1, '标准计费', 1, 0.00, 8.00, 80.00, '22:00:00', '08:00:00', 0.50, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `pricing_rule` VALUES (2, 2, '购物优惠计费', 1, 0.00, 6.00, 60.00, '20:00:00', '08:00:00', 0.60, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+INSERT INTO `pricing_rule` VALUES (3, 3, '机场计费', 1, 0.00, 12.00, 120.00, NULL, NULL, 1.00, '2026-02-25 10:54:41', '2026-02-25 10:54:41');
+
+-- ----------------------------
+-- Table structure for reservation
+-- ----------------------------
+DROP TABLE IF EXISTS `reservation`;
+CREATE TABLE `reservation`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '预约ID',
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `parking_lot_id` bigint NOT NULL COMMENT '停车场ID',
+  `parking_spot_id` bigint NOT NULL COMMENT '车位ID',
+  `start_time` datetime NOT NULL COMMENT '预约开始时间',
+  `end_time` datetime NOT NULL COMMENT '预约结束时间',
+  `actual_check_in` datetime NULL DEFAULT NULL COMMENT '实际入场时间',
+  `actual_check_out` datetime NULL DEFAULT NULL COMMENT '实际离场时间',
+  `reservation_status` tinyint NULL DEFAULT 1 COMMENT '预约状态: 1-待确认, 2-已确认, 3-已取消, 4-已完成, 5-已过期',
+  `payment_status` tinyint NULL DEFAULT 0 COMMENT '支付状态: 0-未支付, 1-已支付, 2-已退款',
+  `total_fee` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '总费用',
+  `reservation_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '预约时间',
+  `license_plate` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '车牌号',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_parking_lot_id`(`parking_lot_id` ASC) USING BTREE,
+  INDEX `idx_reservation_time`(`reservation_time` ASC) USING BTREE,
+  INDEX `idx_start_time_end_time`(`start_time` ASC, `end_time` ASC) USING BTREE,
+  INDEX `idx_reservation_status`(`reservation_status` ASC) USING BTREE,
+  INDEX `fk_reservation_parking_spot`(`parking_spot_id` ASC) USING BTREE,
+  CONSTRAINT `fk_reservation_parking_lot` FOREIGN KEY (`parking_lot_id`) REFERENCES `parking_lot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_reservation_parking_spot` FOREIGN KEY (`parking_spot_id`) REFERENCES `parking_spot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `fk_reservation_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `reservation_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `reservation_ibfk_2` FOREIGN KEY (`parking_lot_id`) REFERENCES `parking_lot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT,
+  CONSTRAINT `reservation_ibfk_3` FOREIGN KEY (`parking_spot_id`) REFERENCES `parking_spot` (`id`) ON DELETE CASCADE ON UPDATE RESTRICT
+) ENGINE = InnoDB AUTO_INCREMENT = 60 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '预约订单表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of reservation
+-- ----------------------------
+INSERT INTO `reservation` VALUES (1, 2, 1, 10, '2026-02-01 08:00:00', '2026-02-01 10:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-01 07:30:00', '京B22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (2, 3, 1, 20, '2026-02-02 09:00:00', '2026-02-02 12:00:00', NULL, NULL, 4, 1, 24.00, '2026-02-02 08:00:00', '京C33333', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (3, 4, 1, 30, '2026-02-03 14:00:00', '2026-02-03 18:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-03 13:00:00', '京D44444', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (4, 5, 1, 40, '2026-02-04 07:00:00', '2026-02-04 09:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-04 06:30:00', '京E55555', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (5, 6, 1, 50, '2026-02-05 10:00:00', '2026-02-05 14:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-05 09:00:00', '京F66666', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (6, 7, 1, 60, '2026-02-06 08:00:00', '2026-02-06 11:00:00', NULL, NULL, 4, 1, 24.00, '2026-02-06 07:00:00', '京G77777', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (7, 8, 1, 70, '2026-02-07 13:00:00', '2026-02-07 17:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-07 12:00:00', '京H88888', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (8, 9, 1, 80, '2026-02-08 09:00:00', '2026-02-08 12:00:00', NULL, NULL, 4, 1, 24.00, '2026-02-08 08:30:00', '京J99999', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (9, 10, 1, 90, '2026-02-09 15:00:00', '2026-02-09 18:00:00', NULL, NULL, 4, 1, 24.00, '2026-02-09 14:00:00', '京K11111', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (10, 11, 1, 100, '2026-02-10 08:00:00', '2026-02-10 10:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-10 07:30:00', '京L22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (11, 2, 1, 110, '2026-02-11 09:00:00', '2026-02-11 13:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-11 08:00:00', '京B22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (12, 3, 1, 120, '2026-02-12 14:00:00', '2026-02-12 20:00:00', NULL, NULL, 4, 1, 48.00, '2026-02-12 13:00:00', '京C33333', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (13, 4, 1, 130, '2026-02-13 07:00:00', '2026-02-13 09:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-13 06:30:00', '京D44444', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (14, 5, 1, 140, '2026-02-14 10:00:00', '2026-02-14 16:00:00', NULL, NULL, 4, 1, 48.00, '2026-02-14 09:00:00', '京E55555', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (15, 6, 1, 150, '2026-02-15 08:00:00', '2026-02-15 12:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-15 07:30:00', '京F66666', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (16, 7, 1, 160, '2026-02-16 13:00:00', '2026-02-16 17:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-16 12:00:00', '京G77777', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (17, 8, 1, 170, '2026-02-17 09:00:00', '2026-02-17 11:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-17 08:30:00', '京H88888', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (18, 9, 1, 180, '2026-02-18 15:00:00', '2026-02-18 19:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-18 14:00:00', '京J99999', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (19, 10, 1, 190, '2026-02-19 08:00:00', '2026-02-19 10:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-19 07:30:00', '京K11111', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (20, 11, 1, 200, '2026-02-20 10:00:00', '2026-02-20 14:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-20 09:00:00', '京L22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (21, 2, 1, 1, '2026-02-21 08:00:00', '2026-02-21 10:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-21 07:30:00', '京B22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (22, 3, 1, 2, '2026-02-22 09:00:00', '2026-02-22 12:00:00', NULL, NULL, 4, 1, 24.00, '2026-02-22 08:00:00', '京C33333', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (23, 4, 1, 51, '2026-02-23 14:00:00', '2026-02-23 18:00:00', NULL, NULL, 4, 1, 32.00, '2026-02-23 13:00:00', '京D44444', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (24, 5, 1, 52, '2026-02-24 07:00:00', '2026-02-24 09:00:00', NULL, NULL, 4, 1, 16.00, '2026-02-24 06:30:00', '京E55555', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (25, 6, 2, 201, '2026-02-21 10:00:00', '2026-02-21 14:00:00', NULL, NULL, 4, 1, 24.00, '2026-02-21 09:00:00', '京F66666', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (26, 7, 2, 202, '2026-02-22 08:00:00', '2026-02-22 11:00:00', NULL, NULL, 4, 1, 18.00, '2026-02-22 07:00:00', '京G77777', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (27, 8, 3, 321, '2026-02-23 06:00:00', '2026-02-23 10:00:00', NULL, NULL, 4, 1, 48.00, '2026-02-23 05:30:00', '京H88888', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (28, 9, 3, 322, '2026-02-24 12:00:00', '2026-02-24 16:00:00', NULL, NULL, 4, 1, 48.00, '2026-02-24 11:00:00', '京J99999', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (29, 2, 1, 4, '2026-02-25 06:00:00', '2026-02-25 22:00:00', NULL, NULL, 2, 1, 128.00, '2026-02-25 05:30:00', '京B22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (30, 3, 1, 5, '2026-02-25 07:00:00', '2026-02-26 07:00:00', NULL, NULL, 2, 1, 192.00, '2026-02-24 20:00:00', '京C33333', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (31, 4, 1, 6, '2026-02-25 08:00:00', '2026-02-25 20:00:00', NULL, NULL, 2, 1, 96.00, '2026-02-25 07:30:00', '京D44444', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (32, 5, 1, 53, '2026-02-25 09:00:00', '2026-02-25 18:00:00', NULL, NULL, 2, 1, 72.00, '2026-02-25 08:30:00', '京E55555', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (33, 6, 1, 54, '2026-02-25 07:30:00', '2026-02-26 07:30:00', NULL, NULL, 2, 1, 192.00, '2026-02-24 22:00:00', '京F66666', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (34, 7, 1, 101, '2026-02-25 08:00:00', '2026-02-25 16:00:00', NULL, NULL, 2, 1, 64.00, '2026-02-25 07:00:00', '京G77777', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (35, 8, 1, 102, '2026-02-25 10:00:00', '2026-02-25 14:00:00', NULL, NULL, 2, 1, 32.00, '2026-02-25 09:30:00', '京H88888', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (36, 9, 2, 203, '2026-02-25 08:00:00', '2026-02-25 20:00:00', NULL, NULL, 2, 1, 72.00, '2026-02-25 07:30:00', '京J99999', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (37, 10, 2, 204, '2026-02-25 09:00:00', '2026-02-26 09:00:00', NULL, NULL, 2, 1, 144.00, '2026-02-24 18:00:00', '京K11111', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (38, 11, 3, 323, '2026-02-25 05:00:00', '2026-02-25 23:00:00', NULL, NULL, 2, 1, 216.00, '2026-02-25 04:30:00', '京L22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (39, 2, 3, 324, '2026-02-25 06:00:00', '2026-02-26 06:00:00', NULL, NULL, 2, 1, 288.00, '2026-02-24 20:00:00', '京B22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (40, 3, 3, 325, '2026-02-25 10:00:00', '2026-02-25 22:00:00', NULL, NULL, 2, 1, 144.00, '2026-02-25 09:00:00', '京C33333', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (41, 4, 1, 7, '2026-02-25 11:00:00', '2026-02-25 15:00:00', NULL, NULL, 2, 0, 32.00, '2026-02-25 10:30:00', '京D44444', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (42, 5, 1, 55, '2026-02-25 13:00:00', '2026-02-25 17:00:00', NULL, NULL, 2, 0, 32.00, '2026-02-25 12:30:00', '京E55555', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (43, 6, 2, 205, '2026-02-25 14:00:00', '2026-02-25 18:00:00', NULL, NULL, 2, 0, 24.00, '2026-02-25 13:30:00', '京F66666', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (44, 7, 3, 326, '2026-02-25 12:00:00', '2026-02-25 20:00:00', NULL, NULL, 2, 0, 96.00, '2026-02-25 11:30:00', '京G77777', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (45, 8, 1, 8, '2026-02-24 10:00:00', '2026-02-25 18:00:00', NULL, NULL, 2, 1, 256.00, '2026-02-24 09:00:00', '京H88888', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (46, 9, 1, 56, '2026-02-24 08:00:00', '2026-02-25 20:00:00', NULL, NULL, 2, 1, 288.00, '2026-02-24 07:30:00', '京J99999', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (47, 10, 2, 206, '2026-02-24 12:00:00', '2026-02-25 12:00:00', NULL, NULL, 2, 1, 144.00, '2026-02-24 11:00:00', '京K11111', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (48, 11, 1, 9, '2026-02-23 09:00:00', '2026-02-23 11:00:00', NULL, NULL, 3, 2, 16.00, '2026-02-22 20:00:00', '京L22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (49, 2, 2, 207, '2026-02-22 14:00:00', '2026-02-22 16:00:00', NULL, NULL, 3, 2, 12.00, '2026-02-22 10:00:00', '京B22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (50, 3, 3, 327, '2026-02-21 08:00:00', '2026-02-21 12:00:00', NULL, NULL, 3, 0, 48.00, '2026-02-20 18:00:00', '京C33333', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (51, 4, 1, 57, '2026-02-20 10:00:00', '2026-02-20 14:00:00', NULL, NULL, 3, 2, 32.00, '2026-02-20 09:00:00', '京D44444', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (52, 5, 2, 208, '2026-02-19 09:00:00', '2026-02-19 11:00:00', NULL, NULL, 3, 0, 12.00, '2026-02-19 08:00:00', '京E55555', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (53, 6, 1, 58, '2026-02-18 08:00:00', '2026-02-18 10:00:00', NULL, NULL, 5, 0, 16.00, '2026-02-18 07:00:00', '京F66666', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (54, 7, 2, 209, '2026-02-17 14:00:00', '2026-02-17 16:00:00', NULL, NULL, 5, 0, 12.00, '2026-02-17 13:00:00', '京G77777', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (55, 8, 3, 328, '2026-02-16 06:00:00', '2026-02-16 10:00:00', NULL, NULL, 5, 0, 48.00, '2026-02-16 05:00:00', '京H88888', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (56, 9, 1, 59, '2026-02-26 09:00:00', '2026-02-26 12:00:00', NULL, NULL, 1, 0, 24.00, '2026-02-25 22:00:00', '京J99999', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (57, 10, 2, 210, '2026-02-26 10:00:00', '2026-02-26 14:00:00', NULL, NULL, 1, 0, 24.00, '2026-02-25 21:30:00', '京K11111', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (58, 11, 3, 329, '2026-02-26 08:00:00', '2026-02-26 20:00:00', NULL, NULL, 1, 0, 144.00, '2026-02-25 20:00:00', '京L22222', '2026-02-25 11:24:33', '2026-02-25 11:24:33');
+INSERT INTO `reservation` VALUES (59, 12, 2, 204, '2026-02-01 08:00:00', '2026-02-03 18:00:00', NULL, NULL, 2, 1, 290.00, '2026-02-25 11:42:52', '京B66666', '2026-02-25 11:42:51', '2026-02-25 11:42:51');
+
+-- ----------------------------
+-- Table structure for user
+-- ----------------------------
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '用户ID',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '用户名',
+  `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '密码',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '手机号',
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '邮箱',
+  `user_type` tinyint NULL DEFAULT 0 COMMENT '用户类型: 0-普通用户, 1-管理员',
+  `status` tinyint NULL DEFAULT 1 COMMENT '状态: 0-禁用, 1-启用',
+  `avatar` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '头像',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `username`(`username` ASC) USING BTREE,
+  INDEX `idx_username`(`username` ASC) USING BTREE,
+  INDEX `idx_phone`(`phone` ASC) USING BTREE,
+  INDEX `idx_user_type`(`user_type` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of user
+-- ----------------------------
+INSERT INTO `user` VALUES (1, 'admin', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000001', 'admin@example.com', 1, 1, NULL, '2026-02-25 11:15:50', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (2, 'zhang_wei', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000002', 'zhang@example.com', 0, 1, NULL, '2026-02-25 11:09:54', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (3, 'li_fang', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000003', 'li@example.com', 0, 1, NULL, '2026-02-25 11:09:54', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (4, 'wang_jun', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000004', 'wang@example.com', 0, 1, NULL, '2026-02-25 11:09:54', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (5, 'chen_xia', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800138000', 'admin@parking.com', 1, 1, NULL, '2026-02-24 22:36:13', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (6, 'liu_yang', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800138001', 'manager@parking.com', 1, 1, NULL, '2026-02-24 22:36:13', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (7, 'zhao_lei', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13900139001', 'user1@parking.com', 0, 1, NULL, '2026-02-24 22:36:13', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (8, 'sun_min', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13900139002', 'user2@parking.com', 0, 1, NULL, '2026-02-24 22:36:13', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (9, 'zhou_tao', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13986339770', NULL, 0, 1, NULL, '2026-02-24 22:42:10', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (10, 'wu_jing', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000010', 'wu@example.com', 0, 1, NULL, '2026-02-25 11:09:54', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (11, 'zheng_hao', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000011', 'zheng@example.com', 0, 1, NULL, '2026-02-25 11:09:54', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (12, 'kkk', '$2a$10$.UdB9CQLVAvibKrVqhyXPOzL87mHGSdvEdMzLZgvwl2abqU5cLidK', '13800000012', 'kkk@example.com', 0, 1, NULL, '2026-02-25 11:15:50', '2026-02-25 11:40:40');
+INSERT INTO `user` VALUES (13, 'uuu', '$2a$10$Pb4iOuigcsoC2kvXYksQyucBN9l1MXtQA/LESNs6pplbuOcAeTWHS', '15791785459', NULL, 0, 1, NULL, '2026-02-25 11:19:10', '2026-02-25 11:19:10');
+
+SET FOREIGN_KEY_CHECKS = 1;
